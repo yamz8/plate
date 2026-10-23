@@ -23,7 +23,7 @@ ApplicationWindow {
     property bool quitting: false
     // Single-key shortcuts stand aside while a field has the keyboard or a dialog is up.
     readonly property bool typing: activeFocusItem !== null && activeFocusItem.hasOwnProperty("cursorPosition")
-    readonly property bool dialogOpen: dilution.visible || unsaved.visible || newPlate.visible || help.visible
+    readonly property bool dialogOpen: dilution.visible || unsaved.visible || newPlate.visible || templateDialog.visible || help.visible
     readonly property bool keysFree: !typing && !dialogOpen
 
     function focusPlate() { plateArea.forceActiveFocus() }
@@ -69,7 +69,7 @@ ApplicationWindow {
         }
     }
 
-    Shortcut { sequence: "?"; context: Qt.ApplicationShortcut; enabled: !win.typing && !unsaved.visible && !dilution.visible && !newPlate.visible; onActivated: help.visible ? help.close() : help.open() }
+    Shortcut { sequence: "?"; context: Qt.ApplicationShortcut; enabled: !win.typing && !unsaved.visible && !dilution.visible && !newPlate.visible && !templateDialog.visible; onActivated: help.visible ? help.close() : help.open() }
     Shortcut { sequence: "Q"; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: win.guard("quit") }
     Shortcut { sequence: "Space"; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: backend.assignSelection() }
     Shortcut { sequence: "1"; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: backend.currentType = 0 }
@@ -95,6 +95,11 @@ ApplicationWindow {
     Shortcut { sequences: [StandardKey.Undo]; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: backend.undo() }
     // StandardKey.Redo already holds Ctrl+Shift+Z on Linux; listing a key twice makes it ambiguous, and it never fires.
     Shortcut { sequences: ["Ctrl+Shift+Z", "Ctrl+Y"]; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: backend.redo() }
+    Shortcut { sequences: ["Delete", "Backspace"]; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: backend.clearSelection() }
+    Shortcut { sequence: "Ctrl+C"; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: backend.copySelection() }
+    Shortcut { sequence: "Ctrl+V"; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: backend.paste() }
+    Shortcut { sequence: "Ctrl+I"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); backend.importNames() } }
+    Shortcut { sequence: "Ctrl+T"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); templateDialog.open() } }
     Shortcut { sequence: "Ctrl+S"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); win.save() } }
     Shortcut { sequence: "Ctrl+Shift+S"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); win.pendingAction = ""; backend.saveAs() } }
     Shortcut { sequence: "Ctrl+E"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); backend.exportPlate() } }
@@ -202,6 +207,7 @@ ApplicationWindow {
                     onNewRequested: win.guard("new")
                     onOpenRequested: win.guard("open")
                     onSaveRequested: { win.focusPlate(); win.save() }
+                    onImportRequested: { win.focusPlate(); backend.importNames() }
                     onDone: win.focusPlate()
                 }
             }
@@ -235,6 +241,7 @@ ApplicationWindow {
                 }
 
                 Label {
+                    objectName: "status"
                     anchors.left: parent.left
                     anchors.right: hint.left
                     anchors.leftMargin: 16
@@ -249,6 +256,7 @@ ApplicationWindow {
                 }
                 Label {
                     id: hint
+                    objectName: "hint"
                     anchors.right: parent.right
                     anchors.rightMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
@@ -272,6 +280,11 @@ ApplicationWindow {
         }
         NewPlateDialog {
             id: newPlate
+            onClosed: Qt.callLater(win.focusPlate)
+            onSaveTemplateRequested: templateDialog.open()
+        }
+        TemplateDialog {
+            id: templateDialog
             onClosed: Qt.callLater(win.focusPlate)
         }
         ShortcutOverlay {

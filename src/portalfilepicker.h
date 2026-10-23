@@ -17,12 +17,13 @@ public:
     void openPlate() override;
     void savePlate(const QUrl &suggestedUrl) override;
     void exportPlate(const QUrl &suggestedUrl) override;
+    void openNames() override;
 
 private slots:
     void handleResponse(uint response, const QVariantMap &results);
 
 private:
-    enum class Action { None, Open, Save, Export };
+    enum class Action { None, Open, Save, Export, Names };
 
     void requestFile(const QString &method, const QString &title, QVariantMap options, Action action);
     bool connectToRequestPath(const QString &path);

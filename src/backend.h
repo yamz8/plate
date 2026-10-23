@@ -32,6 +32,8 @@ class Backend : public QObject {
     Q_PROPERTY(QString fileName READ fileName NOTIFY fileChanged)
     Q_PROPERTY(QString message READ message NOTIFY messageChanged)
     Q_PROPERTY(bool messageIsError READ messageIsError NOTIFY messageChanged)
+    // Each one is {name, builtIn, wells}.
+    Q_PROPERTY(QVariantList templates READ templates NOTIFY templatesChanged)
 
 public:
     explicit Backend(FilePicker *picker = nullptr, QObject *parent = nullptr);
@@ -56,6 +58,9 @@ public:
     bool messageIsError() const { return m_messageIsError; }
     QColor accent() const { return m_accent; }
     void setAccent(const QColor &accent) { m_accent = accent; }
+    QVariantList templates() const;
+    // Where saved templates live; tests point it at a temporary directory.
+    void setTemplateDirectory(const QString &directory);
 
     Q_INVOKABLE QString typeName(int type) const;
     Q_INVOKABLE QString wellName(int row, int column) const { return Plate::wellName(row, column); }
@@ -66,6 +71,10 @@ public:
     Q_INVOKABLE QVariantMap selectionInfo() const;
 
     Q_INVOKABLE void newPlate(int wells);
+    // A new, untitled plate laid out as the template is.
+    Q_INVOKABLE bool newFromTemplate(const QString &name);
+    Q_INVOKABLE bool saveTemplate(const QString &name);
+    Q_INVOKABLE bool deleteTemplate(const QString &name);
     Q_INVOKABLE void setCursor(int row, int column, bool extend = false);
     Q_INVOKABLE void moveCursor(int rowStep, int columnStep, bool extend = false);
     Q_INVOKABLE void select(int row1, int column1, int row2, int column2);
@@ -78,6 +87,16 @@ public:
     Q_INVOKABLE void setUnit(const QString &unit);
     // direction: 0 right, 1 left, 2 down, 3 up.
     Q_INVOKABLE bool dilute(double start, double factor, int direction);
+    // Back to Empty, with no label or concentration.
+    Q_INVOKABLE void clearSelection();
+    // The selection's labels to the clipboard, as a spreadsheet copies cells.
+    Q_INVOKABLE void copySelection();
+    // Names from the clipboard into the labels, from the top-left of the selection.
+    Q_INVOKABLE bool paste();
+    Q_INVOKABLE bool pasteText(const QString &text);
+    // Names from a CSV or text file, through the file chooser.
+    Q_INVOKABLE void importNames();
+    Q_INVOKABLE bool importNamesFrom(const QString &path);
     Q_INVOKABLE bool replicate(int direction);
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
@@ -98,6 +117,7 @@ signals:
     void selectionChanged();
     void fileChanged();
     void messageChanged();
+    void templatesChanged();
     // After a save lands on disk, so a pending quit or new plate can go on.
     void saved();
 
@@ -106,6 +126,7 @@ private:
     void resetHistory(const Plate &plate);
     void say(const QString &message, bool error = false);
     QString suggestedPath(const QString &extension) const;
+    bool pasteTable(const QVector<QStringList> &table, const QString &source);
 
     FilePicker *m_picker = nullptr;
     QVector<Plate> m_history;
@@ -120,4 +141,5 @@ private:
     QString m_message;
     bool m_messageIsError = false;
     QColor m_accent{"#FFD60A"};
+    QString m_templateDirectory;
 };

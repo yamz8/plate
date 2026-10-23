@@ -1,6 +1,8 @@
 #include "backend.h"
 
+#include <QClipboard>
 #include <QCoreApplication>
+#include <QGuiApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -12,6 +14,7 @@
 
 #include "filepicker.h"
 #include "platepainter.h"
+#include "templates.h"
 
 namespace {
 // Enough to walk back through a long session without holding every edit forever.
@@ -23,9 +26,11 @@ Direction toDirection(int direction) {
 }
 } // namespace
 
-Backend::Backend(FilePicker *picker, QObject *parent) : QObject(parent), m_picker(picker), m_history{Plate()} {
+Backend::Backend(FilePicker *picker, QObject *parent)
+    : QObject(parent), m_picker(picker), m_history{Plate()}, m_templateDirectory(Templates::defaultDirectory()) {
     if (!m_picker)
         return;
+    connect(m_picker, &FilePicker::namesSelected, this, [this](const QUrl &url) { importNamesFrom(url.toLocalFile()); });
     connect(m_picker, &FilePicker::openSelected, this, [this](const QUrl &url) { openPath(url.toLocalFile()); });
     connect(m_picker, &FilePicker::saveSelected, this, [this](const QUrl &url) {
         QString path = url.toLocalFile();
@@ -111,6 +116,57 @@ void Backend::newPlate(int wells) {
     say(tr("New %1-well plate").arg(plate().wellCount()));
 }
 
+QVariantList Backend::templates() const {
+    QVariantList list;
+    for (const auto &info : Templates::list(m_templateDirectory))
+        list.append(QVariantMap{{"name", info.name}, {"builtIn", info.builtIn}, {"wells", info.wells}});
+    return list;
+}
+
+void Backend::setTemplateDirectory(const QString &directory) {
+    m_templateDirectory = directory;
+    emit templatesChanged();
+}
+
+bool Backend::newFromTemplate(const QString &name) {
+    QString error;
+    const auto layout = Templates::load(m_templateDirectory, name, &error);
+    if (!layout) {
+        say(tr("Could not use the template %1: %2").arg(name, error), true);
+        return false;
+    }
+    resetHistory(*layout);
+    if (!m_filePath.isEmpty()) {
+        m_filePath.clear();
+        emit fileChanged();
+    }
+    setCursor(0, 0);
+    say(tr("New plate from the template %1").arg(name));
+    return true;
+}
+
+bool Backend::saveTemplate(const QString &name) {
+    QString error;
+    if (!Templates::save(m_templateDirectory, name.trimmed(), plate(), &error)) {
+        say(tr("Could not save the template: %1").arg(error), true);
+        return false;
+    }
+    emit templatesChanged();
+    say(tr("Saved the template %1").arg(name.trimmed()));
+    return true;
+}
+
+bool Backend::deleteTemplate(const QString &name) {
+    QString error;
+    if (!Templates::remove(m_templateDirectory, name, &error)) {
+        say(tr("Could not delete the template %1: %2").arg(name, error), true);
+        return false;
+    }
+    emit templatesChanged();
+    say(tr("Deleted the template %1").arg(name));
+    return true;
+}
+
 void Backend::setCursor(int row, int column, bool extend) {
     row = std::clamp(row, 0, rows() - 1);
     column = std::clamp(column, 0, columns() - 1);
@@ -187,6 +243,68 @@ bool Backend::dilute(double start, double factor, int direction) {
     next.dilute(m_selection, start, factor, toDirection(direction), m_currentType);
     commit(next);
     say(tr("Diluted %1 by %2").arg(selectionName(), QLocale().toString(factor, 'g', 6)));
+    return true;
+}
+
+void Backend::clearSelection() {
+    Plate next = plate();
+    next.clear(m_selection);
+    if (next == plate())
+        return;
+    commit(next);
+    say(tr("Cleared %1").arg(selectionName()));
+}
+
+void Backend::copySelection() {
+    if (auto *clipboard = QGuiApplication::clipboard())
+        clipboard->setText(plate().labelsAsTable(m_selection));
+    say(tr("Copied the labels of %1").arg(selectionName()));
+}
+
+bool Backend::paste() {
+    const auto *clipboard = QGuiApplication::clipboard();
+    return pasteText(clipboard ? clipboard->text() : QString());
+}
+
+bool Backend::pasteText(const QString &text) {
+    return pasteTable(Plate::parseTable(text), tr("the clipboard"));
+}
+
+bool Backend::importNamesFrom(const QString &path) {
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        say(tr("Could not open %1: %2").arg(path, file.errorString()), true);
+        return false;
+    }
+    return pasteTable(Plate::parseTable(QString::fromUtf8(file.readAll())), QFileInfo(path).fileName());
+}
+
+void Backend::importNames() {
+    if (m_picker)
+        m_picker->openNames();
+}
+
+bool Backend::pasteTable(const QVector<QStringList> &table, const QString &source) {
+    int names = 0;
+    for (const QStringList &line : table)
+        names += std::count_if(line.begin(), line.end(), [](const QString &cell) { return !cell.trimmed().isEmpty(); });
+    if (names == 0) {
+        say(tr("There are no names in %1.").arg(source), true);
+        return false;
+    }
+    Plate next = plate();
+    const QRect area = next.clip(m_selection);
+    // Empty wells that get a name become the current type, or samples when that's Empty.
+    const WellType fill = m_currentType == WellType::Empty ? WellType::Sample : m_currentType;
+    int dropped = 0;
+    const QRect pasted = next.pasteLabels(area.topLeft(), table, fill, &dropped);
+    commit(next);
+    select(pasted.top(), pasted.left(), pasted.bottom(), pasted.right());
+    if (dropped > 0)
+        say(tr("Pasted %n name(s) into %1; %2 didn't fit on the plate.", "", names - dropped)
+                .arg(selectionName()).arg(dropped), true);
+    else
+        say(tr("Pasted %n name(s) into %1", "", names).arg(selectionName()));
     return true;
 }
 

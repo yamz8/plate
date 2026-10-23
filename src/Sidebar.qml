@@ -15,6 +15,7 @@ Rectangle {
     signal newRequested()
     signal openRequested()
     signal saveRequested()
+    signal importRequested()
     // The person is done typing; the plate takes the keyboard back.
     signal done()
 
@@ -37,6 +38,8 @@ Rectangle {
         const info = backend.selectionInfo()
         if (!labelField.activeFocus) {
             labelField.text = info.label || ""
+            // A long label shows from its start, not from where the cursor ended up.
+            labelField.cursorPosition = 0
             labelField.mixed = info.labelMixed === true
         }
         if (!concentrationField.activeFocus) {
@@ -259,6 +262,31 @@ Rectangle {
                     leftPadding: 6
                     rightPadding: 6
                     onClicked: { backend.replicate(2); root.done() }
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: -8
+                spacing: 2
+                Button {
+                    Layout.fillWidth: true
+                    text: qsTr("Import names…")
+                    flat: true
+                    focusPolicy: Qt.NoFocus
+                    font.pixelSize: 13
+                    leftPadding: 6
+                    rightPadding: 6
+                    onClicked: root.importRequested()
+                }
+                Button {
+                    Layout.fillWidth: true
+                    text: qsTr("Clear")
+                    flat: true
+                    focusPolicy: Qt.NoFocus
+                    font.pixelSize: 13
+                    leftPadding: 6
+                    rightPadding: 6
+                    onClicked: { backend.clearSelection(); root.done() }
                 }
             }
 

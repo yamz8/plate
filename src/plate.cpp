@@ -67,6 +67,102 @@ QRect Plate::replicate(const QRect &rect, Direction direction) {
     return target;
 }
 
+void Plate::clear(const QRect &rect) {
+    const QRect area = clip(rect);
+    for (int row = area.top(); row <= area.bottom(); ++row)
+        for (int column = area.left(); column <= area.right(); ++column)
+            well(row, column) = Well();
+}
+
+QRect Plate::pasteLabels(const QPoint &topLeft, const QVector<QStringList> &table, WellType fillType, int *dropped) {
+    int width = 0, lost = 0;
+    for (const QStringList &line : table)
+        width = std::max(width, int(line.size()));
+    for (int r = 0; r < table.size(); ++r) {
+        for (int c = 0; c < table[r].size(); ++c) {
+            const QString name = table[r][c].trimmed();
+            if (name.isEmpty())
+                continue;
+            const int row = topLeft.y() + r, column = topLeft.x() + c;
+            if (!contains(row, column)) {
+                ++lost;
+                continue;
+            }
+            Well &w = well(row, column);
+            w.label = name;
+            if (w.type == WellType::Empty)
+                w.type = fillType;
+        }
+    }
+    if (dropped)
+        *dropped = lost;
+    return clip(QRect(topLeft.x(), topLeft.y(), width, int(table.size())));
+}
+
+QString Plate::labelsAsTable(const QRect &rect) const {
+    const QRect area = clip(rect);
+    QStringList lines;
+    for (int row = area.top(); row <= area.bottom(); ++row) {
+        QStringList cells;
+        for (int column = area.left(); column <= area.right(); ++column)
+            cells.append(well(row, column).label);
+        lines.append(cells.join('\t'));
+    }
+    return lines.join('\n');
+}
+
+QVector<QStringList> Plate::parseTable(const QString &text) {
+    // Spreadsheets copy with tabs; CSV files use semicolons where the comma is
+    // the decimal separator, and commas elsewhere. The first line decides.
+    const QString first = text.section('\n', 0, 0);
+    const QChar separator = first.contains('\t') ? '\t' : first.contains(';') ? ';' : ',';
+
+    QVector<QStringList> table;
+    QStringList line;
+    QString cell;
+    bool quoted = false, any = false;
+    auto endLine = [&] {
+        line.append(cell);
+        cell.clear();
+        if (any)
+            table.append(line);
+        line.clear();
+        any = false;
+    };
+    for (int i = 0; i < text.size(); ++i) {
+        const QChar ch = text[i];
+        if (quoted) {
+            if (ch == '"' && i + 1 < text.size() && text[i + 1] == '"') {
+                cell += '"';
+                ++i;
+            } else if (ch == '"') {
+                quoted = false;
+            } else {
+                cell += ch;
+            }
+        } else if (ch == '"' && cell.trimmed().isEmpty()) {
+            quoted = true;
+            cell.clear();
+            any = true;
+        } else if (ch == separator) {
+            line.append(cell);
+            cell.clear();
+        } else if (ch == '\n') {
+            endLine();
+        } else if (ch != '\r') {
+            cell += ch;
+            any = any || !ch.isSpace();
+        }
+    }
+    if (!cell.isEmpty() || !line.isEmpty())
+        endLine();
+    static const QStringList headers{"name", "names", "sample", "samples", "sample name", "sample names",
+                                     "sample id", "id", "label", "labels"};
+    if (!table.isEmpty() && headers.contains(table.first().value(0).trimmed().toLower()))
+        table.removeFirst();
+    return table;
+}
+
 QString Plate::rowName(int row) {
     return QString(QChar('A' + row));
 }

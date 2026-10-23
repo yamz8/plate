@@ -1,0 +1,465 @@
+{
+    "columns": 12,
+    "format": "plate",
+    "rows": 8,
+    "unit": "ng/mL",
+    "version": 1,
+    "wells": [
+        {
+            "well": "A1",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 1000.0
+        },
+        {
+            "well": "A2",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 1000.0
+        },
+        {
+            "well": "A3",
+            "type": "control+",
+            "label": "Pos ctrl"
+        },
+        {
+            "well": "A4",
+            "type": "sample",
+            "label": "S01"
+        },
+        {
+            "well": "A5",
+            "type": "sample",
+            "label": "S01"
+        },
+        {
+            "well": "A6",
+            "type": "sample",
+            "label": "S09"
+        },
+        {
+            "well": "A7",
+            "type": "sample",
+            "label": "S09"
+        },
+        {
+            "well": "A8",
+            "type": "sample",
+            "label": "S17"
+        },
+        {
+            "well": "A9",
+            "type": "sample",
+            "label": "S17"
+        },
+        {
+            "well": "A10",
+            "type": "sample",
+            "label": "S25"
+        },
+        {
+            "well": "A11",
+            "type": "sample",
+            "label": "S25"
+        },
+        {
+            "well": "B1",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 500.0
+        },
+        {
+            "well": "B2",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 500.0
+        },
+        {
+            "well": "B3",
+            "type": "control+",
+            "label": "Pos ctrl"
+        },
+        {
+            "well": "B4",
+            "type": "sample",
+            "label": "S02"
+        },
+        {
+            "well": "B5",
+            "type": "sample",
+            "label": "S02"
+        },
+        {
+            "well": "B6",
+            "type": "sample",
+            "label": "S10"
+        },
+        {
+            "well": "B7",
+            "type": "sample",
+            "label": "S10"
+        },
+        {
+            "well": "B8",
+            "type": "sample",
+            "label": "S18"
+        },
+        {
+            "well": "B9",
+            "type": "sample",
+            "label": "S18"
+        },
+        {
+            "well": "B10",
+            "type": "sample",
+            "label": "S26"
+        },
+        {
+            "well": "B11",
+            "type": "sample",
+            "label": "S26"
+        },
+        {
+            "well": "C1",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 250.0
+        },
+        {
+            "well": "C2",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 250.0
+        },
+        {
+            "well": "C3",
+            "type": "control-",
+            "label": "Neg ctrl"
+        },
+        {
+            "well": "C4",
+            "type": "sample",
+            "label": "S03"
+        },
+        {
+            "well": "C5",
+            "type": "sample",
+            "label": "S03"
+        },
+        {
+            "well": "C6",
+            "type": "sample",
+            "label": "S11"
+        },
+        {
+            "well": "C7",
+            "type": "sample",
+            "label": "S11"
+        },
+        {
+            "well": "C8",
+            "type": "sample",
+            "label": "S19"
+        },
+        {
+            "well": "C9",
+            "type": "sample",
+            "label": "S19"
+        },
+        {
+            "well": "C10",
+            "type": "sample",
+            "label": "S27"
+        },
+        {
+            "well": "C11",
+            "type": "sample",
+            "label": "S27"
+        },
+        {
+            "well": "D1",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 125.0
+        },
+        {
+            "well": "D2",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 125.0
+        },
+        {
+            "well": "D3",
+            "type": "control-",
+            "label": "Neg ctrl"
+        },
+        {
+            "well": "D4",
+            "type": "sample",
+            "label": "S04"
+        },
+        {
+            "well": "D5",
+            "type": "sample",
+            "label": "S04"
+        },
+        {
+            "well": "D6",
+            "type": "sample",
+            "label": "S12"
+        },
+        {
+            "well": "D7",
+            "type": "sample",
+            "label": "S12"
+        },
+        {
+            "well": "D8",
+            "type": "sample",
+            "label": "S20"
+        },
+        {
+            "well": "D9",
+            "type": "sample",
+            "label": "S20"
+        },
+        {
+            "well": "D10",
+            "type": "sample",
+            "label": "S28"
+        },
+        {
+            "well": "D11",
+            "type": "sample",
+            "label": "S28"
+        },
+        {
+            "well": "E1",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 62.5
+        },
+        {
+            "well": "E2",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 62.5
+        },
+        {
+            "well": "E3",
+            "type": "blank",
+            "label": "Blank"
+        },
+        {
+            "well": "E4",
+            "type": "sample",
+            "label": "S05"
+        },
+        {
+            "well": "E5",
+            "type": "sample",
+            "label": "S05"
+        },
+        {
+            "well": "E6",
+            "type": "sample",
+            "label": "S13"
+        },
+        {
+            "well": "E7",
+            "type": "sample",
+            "label": "S13"
+        },
+        {
+            "well": "E8",
+            "type": "sample",
+            "label": "S21"
+        },
+        {
+            "well": "E9",
+            "type": "sample",
+            "label": "S21"
+        },
+        {
+            "well": "E10",
+            "type": "sample",
+            "label": "S29"
+        },
+        {
+            "well": "E11",
+            "type": "sample",
+            "label": "S29"
+        },
+        {
+            "well": "F1",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 31.25
+        },
+        {
+            "well": "F2",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 31.25
+        },
+        {
+            "well": "F3",
+            "type": "blank",
+            "label": "Blank"
+        },
+        {
+            "well": "F4",
+            "type": "sample",
+            "label": "S06"
+        },
+        {
+            "well": "F5",
+            "type": "sample",
+            "label": "S06"
+        },
+        {
+            "well": "F6",
+            "type": "sample",
+            "label": "S14"
+        },
+        {
+            "well": "F7",
+            "type": "sample",
+            "label": "S14"
+        },
+        {
+            "well": "F8",
+            "type": "sample",
+            "label": "S22"
+        },
+        {
+            "well": "F9",
+            "type": "sample",
+            "label": "S22"
+        },
+        {
+            "well": "F10",
+            "type": "sample",
+            "label": "S30"
+        },
+        {
+            "well": "F11",
+            "type": "sample",
+            "label": "S30"
+        },
+        {
+            "well": "G1",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 15.625
+        },
+        {
+            "well": "G2",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 15.625
+        },
+        {
+            "well": "G3",
+            "type": "blank",
+            "label": "Blank"
+        },
+        {
+            "well": "G4",
+            "type": "sample",
+            "label": "S07"
+        },
+        {
+            "well": "G5",
+            "type": "sample",
+            "label": "S07"
+        },
+        {
+            "well": "G6",
+            "type": "sample",
+            "label": "S15"
+        },
+        {
+            "well": "G7",
+            "type": "sample",
+            "label": "S15"
+        },
+        {
+            "well": "G8",
+            "type": "sample",
+            "label": "S23"
+        },
+        {
+            "well": "G9",
+            "type": "sample",
+            "label": "S23"
+        },
+        {
+            "well": "G10",
+            "type": "sample",
+            "label": "S31"
+        },
+        {
+            "well": "G11",
+            "type": "sample",
+            "label": "S31"
+        },
+        {
+            "well": "H1",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 7.8125
+        },
+        {
+            "well": "H2",
+            "type": "standard",
+            "label": "Std",
+            "concentration": 7.8125
+        },
+        {
+            "well": "H3",
+            "type": "blank",
+            "label": "Blank"
+        },
+        {
+            "well": "H4",
+            "type": "sample",
+            "label": "S08"
+        },
+        {
+            "well": "H5",
+            "type": "sample",
+            "label": "S08"
+        },
+        {
+            "well": "H6",
+            "type": "sample",
+            "label": "S16"
+        },
+        {
+            "well": "H7",
+            "type": "sample",
+            "label": "S16"
+        },
+        {
+            "well": "H8",
+            "type": "sample",
+            "label": "S24"
+        },
+        {
+            "well": "H9",
+            "type": "sample",
+            "label": "S24"
+        },
+        {
+            "well": "H10",
+            "type": "sample",
+            "label": "S32"
+        },
+        {
+            "well": "H11",
+            "type": "sample",
+            "label": "S32"
+        }
+    ]
+}

@@ -1,6 +1,8 @@
 // Adapted from Omacut's portal file picker (MIT, David Heinemeier Hansson).
 #include "portalfilepicker.h"
 
+#include <QCoreApplication>
+
 #include <QDBusConnection>
 #include <QDBusArgument>
 #include <QDBusInterface>
@@ -67,22 +69,30 @@ void registerPortalFilterTypes() {
     Q_UNUSED(registered);
 }
 
+// Filter names show in the chooser, so they follow the language too.
+QString filterName(const char *name) {
+    return QCoreApplication::translate("PortalFilePicker", name);
+}
+
 PortalFileFilter plateFilter() {
-    return {QStringLiteral("Plate layouts"), {{0, QStringLiteral("*.plate")}}};
+    return {filterName("Plate layouts"), {{0, QStringLiteral("*.plate")}}};
 }
 
 PortalFileFilters plateFilters() {
-    return {plateFilter(), {QStringLiteral("All files"), {{0, QStringLiteral("*")}}}};
+    return {plateFilter(), {filterName("All files"), {{0, QStringLiteral("*")}}}};
+}
+
+PortalFileFilter namesFilter() {
+    return {filterName("Sample names (CSV or text)"), {{0, QStringLiteral("*.csv")}, {0, QStringLiteral("*.tsv")}, {0, QStringLiteral("*.txt")}}};
 }
 
 // The export formats, in the order the dialog offers them.
-const QList<QPair<QString, PortalFileFilter>> &exportFilters() {
-    static const QList<QPair<QString, PortalFileFilter>> filters{
-        {QStringLiteral("csv"), {QStringLiteral("CSV for plate readers and liquid handlers"), {{0, QStringLiteral("*.csv")}}}},
-        {QStringLiteral("svg"), {QStringLiteral("SVG plate map"), {{0, QStringLiteral("*.svg")}}}},
-        {QStringLiteral("pdf"), {QStringLiteral("PDF plate map"), {{0, QStringLiteral("*.pdf")}}}},
+QList<QPair<QString, PortalFileFilter>> exportFilters() {
+    return {
+        {QStringLiteral("csv"), {filterName("CSV for plate readers and liquid handlers"), {{0, QStringLiteral("*.csv")}}}},
+        {QStringLiteral("svg"), {filterName("SVG plate map"), {{0, QStringLiteral("*.svg")}}}},
+        {QStringLiteral("pdf"), {filterName("PDF plate map"), {{0, QStringLiteral("*.pdf")}}}},
     };
-    return filters;
 }
 
 QString portalToken() {
@@ -141,6 +151,18 @@ void PortalFilePicker::exportPlate(const QUrl &suggestedUrl) {
     options.insert(QStringLiteral("filters"), QVariant::fromValue(filters));
     options.insert(QStringLiteral("current_filter"), QVariant::fromValue(filters.first()));
     requestFile(QStringLiteral("SaveFile"), tr("Export Plate"), options, Action::Export);
+}
+
+void PortalFilePicker::openNames() {
+    QVariantMap options;
+    options.insert(QStringLiteral("accept_label"), tr("Import"));
+    options.insert(QStringLiteral("modal"), true);
+    options.insert(QStringLiteral("multiple"), false);
+    options.insert(QStringLiteral("current_folder"), portalPathBytes(openFolder()));
+    options.insert(QStringLiteral("filters"), QVariant::fromValue(PortalFileFilters{
+        namesFilter(), {filterName("All files"), {{0, QStringLiteral("*")}}}}));
+    options.insert(QStringLiteral("current_filter"), QVariant::fromValue(namesFilter()));
+    requestFile(QStringLiteral("OpenFile"), tr("Import Sample Names"), options, Action::Names);
 }
 
 bool PortalFilePicker::connectToRequestPath(const QString &path) {
@@ -250,6 +272,10 @@ void PortalFilePicker::handleResponse(uint response, const QVariantMap &results)
     const QUrl url(uris.first());
     if (action == Action::Open) {
         emit openSelected(url);
+        return;
+    }
+    if (action == Action::Names) {
+        emit namesSelected(url);
         return;
     }
     if (action == Action::Save) {

@@ -11,7 +11,8 @@ HEADERS += \
     ../src/plate.h \
     ../src/platepainter.h \
     ../src/theme.h \
-    ../src/translator.h
+    ../src/translator.h \
+    ../src/templates.h
 
 SOURCES += \
     plate_tests.cpp \
@@ -19,4 +20,7 @@ SOURCES += \
     ../src/plate.cpp \
     ../src/platepainter.cpp \
     ../src/theme.cpp \
-    ../src/translator.cpp
+    ../src/translator.cpp \
+    ../src/templates.cpp
+
+RESOURCES += ../src/resources.qrc

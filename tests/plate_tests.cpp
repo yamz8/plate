@@ -8,6 +8,7 @@
 #include "filepicker.h"
 #include "plate.h"
 #include "platepainter.h"
+#include "templates.h"
 #include "theme.h"
 #include "translator.h"
 
@@ -20,6 +21,7 @@ public:
     void openPlate() override { emit openSelected(QUrl::fromLocalFile(path)); }
     void savePlate(const QUrl &) override { emit saveSelected(QUrl::fromLocalFile(path)); }
     void exportPlate(const QUrl &) override { emit exportSelected(QUrl::fromLocalFile(path), format); }
+    void openNames() override { emit namesSelected(QUrl::fromLocalFile(path)); }
 };
 
 QByteArray readAll(const QString &path) {
@@ -177,6 +179,113 @@ private slots:
             {"well":"A1","type":1,"label":"x"}]})", &problems));
         QCOMPARE(problems.size(), 1);
         QCOMPARE(problems[0].well, QString("A1"));
+    }
+
+    void readsTablesAsSpreadsheetsWriteThem()
+    {
+        // A column copied from a spreadsheet, its header dropped.
+        QCOMPARE(Plate::parseTable("Sample\nDonor 01\nDonor 02\n\n"),
+                 (QVector<QStringList>{{"Donor 01"}, {"Donor 02"}}));
+        // Tabs win over commas inside names.
+        QCOMPARE(Plate::parseTable("a, 1\tb\r\nc\td"), (QVector<QStringList>{{"a, 1", "b"}, {"c", "d"}}));
+        // CSV quoting, and semicolons where a comma is the decimal separator.
+        QCOMPARE(Plate::parseTable("\"Smith, J\",\"say \"\"hi\"\"\"\nx,y"),
+                 (QVector<QStringList>{{"Smith, J", "say \"hi\""}, {"x", "y"}}));
+        QCOMPARE(Plate::parseTable("a;b,1\n"), (QVector<QStringList>{{"a", "b,1"}}));
+        QVERIFY(Plate::parseTable("  \n\t\n").isEmpty());
+    }
+
+    void pastesNamesAcrossAndDown()
+    {
+        Plate plate;
+        plate.well(0, 1).type = WellType::Standard;
+        int dropped = -1;
+        QRect area = plate.pasteLabels(QPoint(0, 0), {{"a", "b"}, {"c", ""}}, WellType::Sample, &dropped);
+        QCOMPARE(area, QRect(0, 0, 2, 2));
+        QCOMPARE(dropped, 0);
+        QCOMPARE(plate.well(0, 1).label, QString("b"));
+        QCOMPARE(plate.well(0, 1).type, WellType::Standard); // A typed well keeps its type.
+        QCOMPARE(plate.well(1, 0).type, WellType::Sample);   // An empty one takes the fill type.
+        QCOMPARE(plate.well(1, 1).type, WellType::Empty);    // A blank cell leaves its well alone.
+
+        // A column of ten names from G1 runs off the bottom of a 96-well plate.
+        area = plate.pasteLabels(QPoint(0, 6), {{"1"}, {"2"}, {"3"}, {"4"}}, WellType::Sample, &dropped);
+        QCOMPARE(area, QRect(0, 6, 1, 2));
+        QCOMPARE(dropped, 2);
+        QCOMPARE(plate.labelsAsTable(QRect(0, 0, 2, 2)), QString("a\tb\nc\t"));
+
+        plate.clear(QRect(0, 0, 12, 8));
+        QCOMPARE(plate, Plate());
+    }
+
+    void backendPastesClearsAndImports()
+    {
+        FakePicker picker;
+        QTemporaryDir dir;
+        Backend backend(&picker);
+        backend.select(0, 3, 0, 3);
+        QVERIFY(backend.pasteText("Donor 01\tDonor 01\nDonor 02\tDonor 02"));
+        QCOMPARE(backend.selection(), QRect(3, 0, 2, 2));
+        QCOMPARE(backend.plate().well(1, 4).label, QString("Donor 02"));
+        QCOMPARE(backend.plate().count(WellType::Sample), 4);
+        QVERIFY(!backend.pasteText("\n"));
+        QVERIFY(backend.messageIsError());
+
+        backend.clearSelection();
+        QCOMPARE(backend.plate(), Plate());
+        backend.undo();
+        QCOMPARE(backend.plate().count(WellType::Sample), 4);
+
+        // A file of names through the file chooser, its header dropped.
+        picker.path = dir.filePath("names.csv");
+        QFile file(picker.path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("Sample ID\nP-001\nP-002\nP-003\n");
+        file.close();
+        backend.select(0, 0, 0, 0);
+        backend.importNames();
+        QCOMPARE(backend.selectionName(), QString("A1:C1"));
+        QCOMPARE(backend.plate().well(2, 0).label, QString("P-003"));
+        QVERIFY(!backend.importNamesFrom(dir.filePath("missing.csv")));
+    }
+
+    void keepsTemplatesBesideTheBuiltInOnes()
+    {
+        QTemporaryDir dir;
+        // The built-in ELISA layout ships in the binary and is a valid plate.
+        const auto builtIn = Templates::list(dir.path());
+        QCOMPARE(builtIn.size(), 1);
+        QCOMPARE(builtIn[0].name, QString("ELISA"));
+        QVERIFY(builtIn[0].builtIn);
+        QString error;
+        const auto elisa = Templates::load(dir.path(), "ELISA", &error);
+        QVERIFY2(elisa.has_value(), qPrintable(error));
+        QCOMPARE(elisa->count(WellType::Standard), 16);
+
+        Backend backend;
+        backend.setTemplateDirectory(dir.path());
+        QSignalSpy changed(&backend, &Backend::templatesChanged);
+        backend.setCurrentType(int(WellType::Blank));
+        backend.assign(0, 0, 7, 0);
+        QVERIFY(backend.saveTemplate("Blanks first"));
+        QVERIFY(!backend.saveTemplate("../escape"));
+        QVERIFY(!backend.saveTemplate(".hidden"));
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(backend.templates().size(), 2);
+        QCOMPARE(backend.templates()[1].toMap()["name"].toString(), QString("Blanks first"));
+
+        backend.newPlate(384);
+        QVERIFY(backend.newFromTemplate("Blanks first"));
+        QCOMPARE(backend.rows(), 8);
+        QCOMPARE(backend.plate().count(WellType::Blank), 8);
+        QVERIFY(!backend.dirty());
+        QVERIFY(backend.filePath().isEmpty());
+        QVERIFY(!backend.newFromTemplate("Nothing"));
+
+        // Built-in templates can't be deleted; saved ones can.
+        QVERIFY(!backend.deleteTemplate("ELISA"));
+        QVERIFY(backend.deleteTemplate("Blanks first"));
+        QCOMPARE(backend.templates().size(), 1);
     }
 
     void writesCsvForInstruments()

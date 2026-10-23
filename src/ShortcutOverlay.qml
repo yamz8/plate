@@ -10,7 +10,9 @@ Popup {
     modal: true
     anchors.centerIn: Overlay.overlay
     padding: 24
-    width: Math.min(820, parent ? parent.width - 40 : 820)
+    // Three columns when the window is wide enough; otherwise two, scrolling when short.
+    width: Math.min(1120, parent ? parent.width - 40 : 820)
+    height: Math.min(implicitHeight, parent ? parent.height - 40 : implicitHeight)
     Material.roundedScale: theme.radius
     focus: true
 
@@ -40,8 +42,11 @@ Popup {
             ["D", qsTr("Serial dilution")],
             ["R", qsTr("Replicate to the right")],
             ["Shift + R", qsTr("Replicate below")],
+            ["Delete", qsTr("Clear the selection")],
+            ["Ctrl + C", qsTr("Copy the labels")],
+            ["Ctrl + V", qsTr("Paste names as labels")],
             ["Ctrl + Z", qsTr("Undo")],
-            ["Ctrl + Shift + Z", qsTr("Redo")]
+            ["Ctrl + Shift + Z", qsTr("Redo (or Ctrl + Y)")]
         ]},
         { title: qsTr("File"), keys: [
             ["Ctrl + N", qsTr("New plate")],
@@ -49,89 +54,110 @@ Popup {
             ["Ctrl + S", qsTr("Save")],
             ["Ctrl + Shift + S", qsTr("Save as")],
             ["Ctrl + E", qsTr("Export CSV, SVG, or PDF")],
+            ["Ctrl + I", qsTr("Import sample names")],
+            ["Ctrl + T", qsTr("Save as template")],
             ["?", qsTr("Show or hide shortcuts")],
             ["Q", qsTr("Quit")]
         ]}
     ]
 
-    contentItem: ColumnLayout {
-        spacing: 16
+    contentItem: Flickable {
+        id: scroller
+        implicitHeight: content.implicitHeight
+        contentHeight: content.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
         focus: true
+        ScrollBar.vertical: ScrollBar { policy: scroller.contentHeight > scroller.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff }
         Keys.onPressed: (event) => {
             if (event.text === "?") {
                 root.close()
                 event.accepted = true
+                return
+            }
+            // When the window is too short for every shortcut, the arrows scroll.
+            const step = event.key === Qt.Key_Down ? 40 : event.key === Qt.Key_Up ? -40
+                       : event.key === Qt.Key_PageDown ? height : event.key === Qt.Key_PageUp ? -height : 0
+            if (step !== 0) {
+                contentY = Math.max(0, Math.min(contentHeight - height, contentY + step))
+                event.accepted = true
             }
         }
-        Label {
-            text: qsTr("Keyboard shortcuts")
-            font.pixelSize: 18
-            font.bold: true
-        }
-        GridLayout {
-            columns: 2
-            columnSpacing: 32
-            rowSpacing: 18
-            Repeater {
-                model: root.groups
-                delegate: ColumnLayout {
-                    required property var modelData
-                    Layout.alignment: Qt.AlignTop
-                    Layout.fillWidth: true
-                    spacing: 6
-                    Label {
-                        text: modelData.title
-                        color: theme.accent
-                        font.pixelSize: 12
-                        font.capitalization: Font.AllUppercase
-                        font.letterSpacing: 0.6
-                    }
-                    Repeater {
-                        model: modelData.keys
-                        delegate: RowLayout {
-                            required property var modelData
-                            spacing: 12
-                            Rectangle {
-                                Layout.preferredWidth: 128
-                                Layout.preferredHeight: 22
-                                radius: Math.min(4, theme.radius)
-                                color: "#232329"
-                                Label {
-                                    anchors.centerIn: parent
-                                    text: modelData[0]
-                                    font.pixelSize: 12
-                                    color: "#d6d6dc"
+
+        ColumnLayout {
+            id: content
+            width: scroller.width - (scroller.contentHeight > scroller.height ? 14 : 0)
+            spacing: 16
+            Label {
+                text: qsTr("Keyboard shortcuts")
+                font.pixelSize: 18
+                font.bold: true
+            }
+            GridLayout {
+                columns: root.width >= 1060 ? 3 : 2
+                columnSpacing: 32
+                rowSpacing: 18
+                Repeater {
+                    model: root.groups
+                    delegate: ColumnLayout {
+                        required property var modelData
+                        Layout.alignment: Qt.AlignTop
+                        Layout.fillWidth: true
+                        spacing: 6
+                        Label {
+                            text: modelData.title
+                            color: theme.accent
+                            font.pixelSize: 12
+                            font.capitalization: Font.AllUppercase
+                            font.letterSpacing: 0.6
+                        }
+                        Repeater {
+                            model: modelData.keys
+                            delegate: RowLayout {
+                                required property var modelData
+                                spacing: 12
+                                Rectangle {
+                                    Layout.preferredWidth: 128
+                                    Layout.preferredHeight: 22
+                                    radius: Math.min(4, theme.radius)
+                                    color: "#232329"
+                                    Label {
+                                        anchors.centerIn: parent
+                                        text: modelData[0]
+                                        font.pixelSize: 12
+                                        color: "#d6d6dc"
+                                    }
                                 }
-                            }
-                            Label {
-                                Layout.fillWidth: true
-                                text: modelData[1]
-                                font.pixelSize: 13
-                                color: "#b4b4bc"
-                                elide: Text.ElideRight
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: modelData[1]
+                                    font.pixelSize: 13
+                                    color: "#b4b4bc"
+                                    elide: Text.ElideRight
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        RowLayout {
-            spacing: 14
-            Repeater {
-                model: 6
-                delegate: RowLayout {
-                    required property int index
-                    spacing: 6
-                    WellSwatch {
-                        Layout.preferredWidth: 16
-                        Layout.preferredHeight: 16
-                        type: index
-                        accent: theme.accent
-                    }
-                    Label {
-                        text: backend.typeName(index)
-                        font.pixelSize: 12
-                        color: "#b4b4bc"
+            RowLayout {
+                spacing: 14
+                Repeater {
+                    model: 6
+                    delegate: RowLayout {
+                        required property int index
+                        spacing: 6
+                        WellSwatch {
+                            Layout.preferredWidth: 16
+                            Layout.preferredHeight: 16
+                            type: index
+                            accent: theme.accent
+                        }
+                        Label {
+                            text: backend.typeName(index)
+                            font.pixelSize: 12
+                            color: "#b4b4bc"
+                        }
                     }
                 }
             }

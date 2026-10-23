@@ -2,9 +2,16 @@
 set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-mkdir -p "$ROOT/build/tests"
-cd "$ROOT/build/tests"
 
-qmake6 "$ROOT/tests/plate_tests.pro"
-make -j"$(nproc)"
-QT_QPA_PLATFORM=offscreen ./plate_tests
+# The model and command line, then the real window driven offscreen.
+for suite in plate_tests ui_tests; do
+    mkdir -p "$ROOT/build/tests/$suite"
+    cd "$ROOT/build/tests/$suite"
+    qmake6 "$ROOT/tests/$suite.pro"
+    make -j"$(nproc)"
+    QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME=generic NO_AT_BRIDGE=1 ./"$suite"
+done
+
+# Every command, against the real binary.
+"$ROOT/bin/build" >/dev/null
+"$ROOT/tests/cli.sh" "$ROOT/build/plate"

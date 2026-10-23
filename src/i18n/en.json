@@ -1,5 +1,22 @@
 {
-  "%1 selected  ·  %n well(s)": { "one": "%1 selected  ·  %n well", "other": "%1 selected  ·  %n wells" },
-  "%1  ·  %n well(s)": { "one": "%1  ·  %n well", "other": "%1  ·  %n wells" },
-  "Opened %1 with %n problem(s); the first: %2": { "one": "Opened %1 with %n problem: %2", "other": "Opened %1 with %n problems; the first: %2" }
+  "%1 selected  ·  %n well(s)": {
+    "one": "%1 selected  ·  %n well",
+    "other": "%1 selected  ·  %n wells"
+  },
+  "%1  ·  %n well(s)": {
+    "one": "%1  ·  %n well",
+    "other": "%1  ·  %n wells"
+  },
+  "Opened %1 with %n problem(s); the first: %2": {
+    "one": "Opened %1 with %n problem: %2",
+    "other": "Opened %1 with %n problems; the first: %2"
+  },
+  "Pasted %n name(s) into %1; %2 didn't fit on the plate.": {
+    "one": "Pasted %n name into %1; %2 didn't fit on the plate.",
+    "other": "Pasted %n names into %1; %2 didn't fit on the plate."
+  },
+  "Pasted %n name(s) into %1": {
+    "one": "Pasted %n name into %1",
+    "other": "Pasted %n names into %1"
+  }
 }

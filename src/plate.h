@@ -59,6 +59,22 @@ public:
     // Copies rect into replicaRect(rect, direction) and returns where it went.
     QRect replicate(const QRect &rect, Direction direction);
 
+    // Every well in rect back to Empty, with no label or concentration.
+    void clear(const QRect &rect);
+
+    // Writes a table of names into the labels of the wells from topLeft (x is
+    // the column) as a spreadsheet pastes: one cell to a well, across and down.
+    // Blank cells leave their well alone, empty wells that get a name take
+    // fillType, and cells past the plate's edge are dropped. Returns the wells
+    // the table covers on the plate and, in dropped, the names that didn't fit.
+    QRect pasteLabels(const QPoint &topLeft, const QVector<QStringList> &table, WellType fillType, int *dropped = nullptr);
+    // The labels in rect as tab-separated lines, as spreadsheets copy them.
+    QString labelsAsTable(const QRect &rect) const;
+    // A table from pasted or imported text: tabs, semicolons, or commas
+    // between cells (in that order of preference, from the first line), CSV quoting, blank lines dropped.
+    // A header row ("Sample", "Name", "ID", …) names the column, so it's dropped too.
+    static QVector<QStringList> parseTable(const QString &text);
+
     QJsonObject toJson() const;
     QByteArray toJsonBytes() const;
     QByteArray toCsv() const;

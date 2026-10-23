@@ -42,14 +42,21 @@ display.
 
 ## Workflow
 
-1. Start: `plate new assay.plate --wells 96 --unit µM`, or edit an existing file.
+1. Start: `plate new assay.plate --wells 96 --unit µM`, or from a template with
+   `plate new assay.plate --template ELISA` (`plate templates` lists them; the
+   person's own are `.plate` files in `~/.local/share/plate/templates`). Or edit
+   an existing file.
 2. Edit the JSON directly. For a serial dilution, compute each concentration
-   (start / factor^step) and write it per well.
+   (start / factor^step) and write it per well. To label wells from a list of
+   sample names, `plate names assay.plate --from names.csv --at A4` fills them
+   across and down from A4 (a header row is skipped; names that run off the
+   plate are reported as `dropped`).
 3. Check: `plate check assay.plate --json` lists every problem with its well.
    Fix all of them.
 4. Export when asked:
    - `plate export assay.plate --csv assay.csv`: Well, Type, Label,
      Concentration for every well, for plate readers and liquid handlers.
+     `--csv -` prints it instead.
    - `--svg map.svg` or `--pdf map.pdf`: a printable plate map with a legend.
    Several at once are fine.
 
