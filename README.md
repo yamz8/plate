@@ -45,8 +45,12 @@ Plate follows the Omarchy theme, window rounding, and language live.
 | `D` | Serial dilution across the selection: start, factor, direction |
 | `R` | Replicate the selection into the wells to its right |
 | Shift + `R` | Replicate the selection into the wells below |
-| Ctrl + `Z` / Ctrl + Shift + `Z` | Undo / redo |
-| Ctrl + `N` | New plate (96 or 384 wells) |
+| `Delete` | Clear the selection back to empty wells |
+| Ctrl + `C` / Ctrl + `V` | Copy the selection's labels / paste names as labels |
+| Ctrl + `Z` / Ctrl + Shift + `Z` (or Ctrl + `Y`) | Undo / redo |
+| Ctrl + `N` | New plate: 96 or 384 wells, or from a template |
+| Ctrl + `T` | Save the layout as a template |
+| Ctrl + `I` | Import sample names from a CSV or text file |
 | Ctrl + `O` | Open |
 | Ctrl + `S` / Ctrl + Shift + `S` | Save / save as |
 | Ctrl + `E` | Export CSV, SVG, or PDF |
@@ -55,6 +59,23 @@ Plate follows the Omarchy theme, window rounding, and language live.
 
 Hovering a well shows its type, label, and concentration in the status line.
 A replicate becomes the new selection, so pressing `R` twice makes triplicates.
+
+## Sample names
+
+Copy a column of sample names in a spreadsheet, select the first well, and
+press Ctrl + `V`: the names fill the wells down from there, as a spreadsheet
+pastes. Several columns fill several columns. Ctrl + `I` does the same from a
+CSV, TSV, or text file. A header row such as `Sample` or `Name` is skipped,
+empty wells that get a name become the current sample type, and names that
+run off the plate are counted in the status line rather than dropped quietly.
+
+## Templates
+
+Ctrl + `N` offers a built-in ELISA layout (an 8-point standard curve in
+duplicate, controls, blanks, and 32 samples in duplicate) and every layout you
+have saved with Ctrl + `T`. Saved templates are ordinary `.plate` files in
+`~/.local/share/plate/templates`, so they can be copied to a colleague or
+edited by hand.
 
 ## The .plate file
 
@@ -87,8 +108,11 @@ Every command except `open` runs without a display, takes `--json`, exits 0 or
 ```sh
 plate open [file]                          # the window
 plate new assay.plate --wells 384 --unit µM
+plate new elisa.plate --template ELISA     # plate templates lists them
+plate names assay.plate --from names.csv --at A4
 plate check assay.plate --json             # every problem, with its well
 plate export assay.plate --csv assay.csv --svg map.svg --pdf map.pdf --json
+plate export assay.plate --csv -           # the CSV on standard output
 plate skill install                        # an agent skill for coding agents
 ```
 
@@ -102,7 +126,7 @@ ships with Omarchy.
 
 ```sh
 bin/build      # build/plate
-bin/test       # the Qt Test suite, offscreen
+bin/test       # model and window tests offscreen, then every command
 bin/install    # makepkg -fsi: the binary, launcher entry, icon, and .plate file type
 ```
 

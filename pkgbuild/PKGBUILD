@@ -1,5 +1,5 @@
 pkgname=plate
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
 pkgdesc='Design a microplate layout and export it for a plate reader or liquid handler'
 arch=('x86_64' 'aarch64')
