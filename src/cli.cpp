@@ -158,6 +158,7 @@ int skill(const QStringList &arguments) {
     Command command("skill", "Print the agent skill, or install it for your coding agents with: skill install.", false);
     command.parser.addPositionalArgument("install", "Copy to ~/.agents/skills/plate and link into ~/.claude/skills",
                                          "[install]");
+    command.json();
     command.parser.process(arguments);
     QFile bundled(":/skill.md");
     if (!bundled.open(QIODevice::ReadOnly))
@@ -174,9 +175,15 @@ int skill(const QStringList &arguments) {
     QSaveFile file(directory + "/SKILL.md");
     if (!QDir().mkpath(directory) || !file.open(QIODevice::WriteOnly) || file.write(text) < 0 || !file.commit())
         return fail("Could not write " + file.fileName());
-    print(stdout, "Installed " + file.fileName());
-    if (!home.exists(".claude"))
+    const bool json = command.parser.isSet("json");
+    QJsonObject result{{"skill", file.fileName()}, {"link", QJsonValue()}};
+    if (!json)
+        print(stdout, "Installed " + file.fileName());
+    if (!home.exists(".claude")) {
+        if (json)
+            print(result);
         return 0;
+    }
     const QString link = home.filePath(".claude/skills/plate");
     const QFileInfo existing(link);
     if (existing.isSymLink())
@@ -185,7 +192,12 @@ int skill(const QStringList &arguments) {
         return fail(link + " exists and is not a link; leaving it alone.");
     if (!home.mkpath(".claude/skills") || !QFile::link("../../.agents/skills/plate", link))
         return fail("Could not link " + link);
-    print(stdout, "Linked " + link);
+    if (json) {
+        result.insert("link", link);
+        print(result);
+    } else {
+        print(stdout, "Linked " + link);
+    }
     return 0;
 }
 

@@ -79,6 +79,8 @@ Dialog {
         TextField {
             id: startField
             Layout.fillWidth: true
+            // Tabbing in replaces the value, as typing over a selection does.
+            onActiveFocusChanged: if (activeFocus && (focusReason === Qt.TabFocusReason || focusReason === Qt.BacktabFocusReason)) selectAll()
             placeholderText: qsTr("Start concentration") + (backend.unit ? " (" + backend.unit + ")" : "")
             inputMethodHints: Qt.ImhFormattedNumbersOnly
             onAccepted: root.accept()
@@ -86,6 +88,8 @@ Dialog {
         TextField {
             id: factorField
             Layout.fillWidth: true
+            // Tabbing in replaces the value, as typing over a selection does.
+            onActiveFocusChanged: if (activeFocus && (focusReason === Qt.TabFocusReason || focusReason === Qt.BacktabFocusReason)) selectAll()
             placeholderText: qsTr("Dilution factor (2 halves each step)")
             inputMethodHints: Qt.ImhFormattedNumbersOnly
             onAccepted: root.accept()

@@ -93,7 +93,8 @@ ApplicationWindow {
     Shortcut { sequence: "L"; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: sidebar.editLabel() }
     Shortcut { sequence: "C"; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: sidebar.editConcentration() }
     Shortcut { sequences: [StandardKey.Undo]; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: backend.undo() }
-    Shortcut { sequences: ["Ctrl+Shift+Z", StandardKey.Redo]; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: backend.redo() }
+    // StandardKey.Redo already holds Ctrl+Shift+Z on Linux; listing a key twice makes it ambiguous, and it never fires.
+    Shortcut { sequences: ["Ctrl+Shift+Z", "Ctrl+Y"]; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: backend.redo() }
     Shortcut { sequence: "Ctrl+S"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); win.save() } }
     Shortcut { sequence: "Ctrl+Shift+S"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); win.pendingAction = ""; backend.saveAs() } }
     Shortcut { sequence: "Ctrl+E"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); backend.exportPlate() } }
