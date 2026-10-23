@@ -1,0 +1,5 @@
+{
+  "%1 selected  ·  %n well(s)": { "one": "%1 selected  ·  %n well", "other": "%1 selected  ·  %n wells" },
+  "%1  ·  %n well(s)": { "one": "%1  ·  %n well", "other": "%1  ·  %n wells" },
+  "Opened %1 with %n problem(s); the first: %2": { "one": "Opened %1 with %n problem: %2", "other": "Opened %1 with %n problems; the first: %2" }
+}

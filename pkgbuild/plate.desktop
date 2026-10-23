@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Plate
+Name[da]=Plate
+Comment=Design a microplate layout and export it for a plate reader or liquid handler
+Comment[da]=Design et mikropladelayout, og eksportér det til en pladelæser eller pipetteringsrobot
+GenericName=Plate layout designer
+GenericName[da]=Pladelayout
+Exec=plate open %f
+Icon=plate
+Terminal=false
+Categories=Science;Biology;
+Keywords=microplate;96-well;384-well;ELISA;assay;plate map;
+MimeType=application/x-plate;
+StartupWMClass=plate
