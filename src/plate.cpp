@@ -239,8 +239,11 @@ std::optional<Plate> Plate::fromJson(const QByteArray &json, QVector<PlateProble
         seen.insert(canonical);
 
         Well &w = plate.well(row, column);
-        const auto type = typeFromId(object.value("type").toString("empty"));
-        if (!type)
+        const QJsonValue typeValue = object.value("type");
+        const auto type = typeFromId(typeValue.isUndefined() ? QString("empty") : typeValue.toString());
+        if (!typeValue.isUndefined() && !typeValue.isString())
+            problem(canonical, canonical + ": \"type\" must be a string.");
+        else if (!type)
             problem(canonical, QString("%1: unknown type \"%2\"; use sample, standard, control+, control-, blank, or empty.")
                                    .arg(canonical, object.value("type").toString()));
         w.type = type.value_or(WellType::Empty);

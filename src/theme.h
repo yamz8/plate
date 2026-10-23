@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QFileSystemWatcher>
+#include <QColor>
 #include <QObject>
 #include <QProcess>
 #include <QTimer>
@@ -20,6 +21,7 @@ public:
     int radius() const { return m_radius; }
 
     static QString readAccent(const QString &path);
+    static bool isLight(const QColor &color);
 
 signals:
     void changed();

@@ -1,4 +1,5 @@
 #include "platepainter.h"
+#include "theme.h"
 
 #include <QCoreApplication>
 #include <QFontMetricsF>
@@ -45,11 +46,9 @@ void fillTypes(PlatePalette &palette, const QColor &accent) {
     palette.types[int(WellType::Empty)] = palette.grid;
 }
 
-// Black or white, whichever reads on color (WCAG relative luminance).
+// Black or white, whichever reads on color.
 QColor ink(const QColor &color) {
-    auto linear = [](double v) { return v <= .04045 ? v / 12.92 : std::pow((v + .055) / 1.055, 2.4); };
-    const double luminance = .2126 * linear(color.redF()) + .7152 * linear(color.greenF()) + .0722 * linear(color.blueF());
-    return luminance > .179 ? QColor("#111114") : QColor("#ffffff");
+    return Theme::isLight(color) ? QColor("#111114") : QColor("#ffffff");
 }
 
 QString formatConcentration(double value, const QString &unit) {
@@ -342,9 +341,7 @@ void paintPrintMap(QPainter *painter, const QRectF &page, const Plate &plate, co
     // Labels always print when the plate has them, so pick a layout that
     // keeps them even for 384 wells.
     PlateLayout layout = plateLayout(plateArea, plate);
-    layout.labels = std::any_of(&plate.well(0, 0), &plate.well(0, 0) + plate.wellCount(), [](const Well &w) {
-        return !w.label.isEmpty() || w.concentration.has_value();
-    });
+    layout.labels = hasText(plate);
     paintPlate(painter, layout, plate, palette, {}, 10);
     painter->restore();
 }

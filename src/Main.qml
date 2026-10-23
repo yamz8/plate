@@ -37,6 +37,11 @@ ApplicationWindow {
             perform(action)
         }
     }
+    // A save of its own; a quit, new, or open the unsaved dialog was waiting on no longer applies.
+    function save() {
+        pendingAction = ""
+        backend.save()
+    }
     function perform(action) {
         pendingAction = ""
         if (action === "quit") {
@@ -89,8 +94,8 @@ ApplicationWindow {
     Shortcut { sequence: "C"; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: sidebar.editConcentration() }
     Shortcut { sequences: [StandardKey.Undo]; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: backend.undo() }
     Shortcut { sequences: ["Ctrl+Shift+Z", StandardKey.Redo]; context: Qt.ApplicationShortcut; enabled: win.keysFree; onActivated: backend.redo() }
-    Shortcut { sequence: "Ctrl+S"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); backend.save() } }
-    Shortcut { sequence: "Ctrl+Shift+S"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); backend.saveAs() } }
+    Shortcut { sequence: "Ctrl+S"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); win.save() } }
+    Shortcut { sequence: "Ctrl+Shift+S"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); win.pendingAction = ""; backend.saveAs() } }
     Shortcut { sequence: "Ctrl+E"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); backend.exportPlate() } }
     Shortcut { sequence: "Ctrl+O"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); win.guard("open") } }
     Shortcut { sequence: "Ctrl+N"; context: Qt.ApplicationShortcut; enabled: !win.dialogOpen; onActivated: { win.focusPlate(); win.guard("new") } }
@@ -195,6 +200,7 @@ ApplicationWindow {
                     onDiluteRequested: dilution.open()
                     onNewRequested: win.guard("new")
                     onOpenRequested: win.guard("open")
+                    onSaveRequested: { win.focusPlate(); win.save() }
                     onDone: win.focusPlate()
                 }
             }
@@ -205,7 +211,8 @@ ApplicationWindow {
                 Layout.preferredHeight: 34
                 color: "#131316"
 
-                readonly property var hovered: view.hover.x >= 0 ? (backend.revision, backend.wellInfo(view.hover.y, view.hover.x)) : null
+                // A well hovered on the previous plate may not exist on this one.
+                readonly property var hovered: view.hover.x >= 0 && view.hover.x < backend.columns && view.hover.y < backend.rows ? (backend.revision, backend.wellInfo(view.hover.y, view.hover.x)) : null
 
                 function describe(info) {
                     let parts = [info.name, info.typeName]

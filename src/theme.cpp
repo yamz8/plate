@@ -73,12 +73,14 @@ QString Theme::readAccent(const QString &path) {
     return "#FFD60A";
 }
 
-// Black or white, whichever reads on the accent (WCAG relative luminance).
-QString Theme::accentForeground() const {
-    const QColor c(m_accent);
+// Whether black text reads better than white on color (WCAG relative luminance).
+bool Theme::isLight(const QColor &color) {
     auto linear = [](double v) { return v <= .04045 ? v / 12.92 : std::pow((v + .055) / 1.055, 2.4); };
-    const double luminance = .2126 * linear(c.redF()) + .7152 * linear(c.greenF()) + .0722 * linear(c.blueF());
-    return luminance > .179 ? "black" : "white";
+    return .2126 * linear(color.redF()) + .7152 * linear(color.greenF()) + .0722 * linear(color.blueF()) > .179;
+}
+
+QString Theme::accentForeground() const {
+    return isLight(QColor(m_accent)) ? "black" : "white";
 }
 
 void Theme::reload() {

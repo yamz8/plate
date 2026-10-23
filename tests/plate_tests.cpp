@@ -170,6 +170,13 @@ private slots:
         QCOMPARE(problems[1].well, QString("A1"));
         QCOMPARE(problems[3].well, QString("B2"));
         QCOMPARE(plate->well(2, 2).type, WellType::ControlNegative);
+
+        // A type that isn't a string is a problem, not a quiet Empty.
+        problems.clear();
+        QVERIFY(Plate::fromJson(R"({"format":"plate","version":1,"rows":8,"columns":12,"wells":[
+            {"well":"A1","type":1,"label":"x"}]})", &problems));
+        QCOMPARE(problems.size(), 1);
+        QCOMPARE(problems[0].well, QString("A1"));
     }
 
     void writesCsvForInstruments()
@@ -249,6 +256,29 @@ private slots:
         backend.assignSelection();
         backend.undo();
         QCOMPARE(backend.plate().count(WellType::Standard), 0);
+    }
+
+    void backendForgetsASavePointOnADroppedRedoBranch()
+    {
+        FakePicker picker;
+        QTemporaryDir dir;
+        picker.path = dir.filePath("saved.plate");
+        Backend backend(&picker);
+        backend.assign(0, 0, 0, 0);
+        backend.assign(0, 1, 0, 1);
+        backend.save();
+        QVERIFY(!backend.dirty());
+
+        // Undo past the save, then edit as many times: the history index is back
+        // where it was saved, but the plate isn't what's on disk.
+        backend.undo();
+        backend.undo();
+        backend.assign(1, 0, 1, 0);
+        backend.assign(1, 1, 1, 1);
+        QVERIFY(backend.dirty());
+        backend.undo();
+        backend.undo();
+        QVERIFY(backend.dirty());
     }
 
     void backendDilutesAndReplicatesTheSelection()

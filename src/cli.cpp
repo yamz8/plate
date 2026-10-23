@@ -105,7 +105,7 @@ int exportPlate(const QStringList &arguments) {
     }
 
     // The map follows the desktop accent, as the window does.
-    const Theme theme;
+    const QColor accent(Theme::readAccent(QDir::homePath() + "/.local/state/omarchy/current/theme/colors.toml"));
     const QString title = QFileInfo(path).completeBaseName();
     QJsonArray written;
     for (const QString format : {"csv", "svg", "pdf"}) {
@@ -114,8 +114,8 @@ int exportPlate(const QStringList &arguments) {
         const QString out = command.parser.value(format);
         QString error;
         const bool ok = format == "csv" ? exportCsv(*plate, out, &error)
-                      : format == "svg" ? exportSvg(*plate, out, title, QColor(theme.accent()), &error)
-                                        : exportPdf(*plate, out, title, QColor(theme.accent()), &error);
+                      : format == "svg" ? exportSvg(*plate, out, title, accent, &error)
+                                        : exportPdf(*plate, out, title, accent, &error);
         if (!ok)
             return fail("Could not write " + out + ": " + error);
         written.append(QJsonObject{{"format", format}, {"path", QFileInfo(out).absoluteFilePath()}});

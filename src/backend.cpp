@@ -224,6 +224,9 @@ void Backend::redo() {
 void Backend::commit(const Plate &next) {
     if (next == plate())
         return;
+    // The saved state is on the redo branch about to be dropped; nothing will match it again.
+    if (m_cleanIndex > m_index)
+        m_cleanIndex = -1;
     m_history.resize(m_index + 1);
     m_history.append(next);
     ++m_index;

@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
 import Plate
+import "Numbers.js" as Numbers
 
 // The panel beside the plate: what's open, the sample types, and the selected wells.
 Rectangle {
@@ -13,6 +14,7 @@ Rectangle {
     signal diluteRequested()
     signal newRequested()
     signal openRequested()
+    signal saveRequested()
     // The person is done typing; the plate takes the keyboard back.
     signal done()
 
@@ -21,16 +23,13 @@ Rectangle {
 
     function formatNumber(value) {
         translator.language
-        return Number(value).toLocaleString(Qt.locale(), 'g', 6)
+        return Numbers.format(Qt.locale(), value)
     }
-    // Accepts the language's own decimal separator, and a plain point too.
-    function parseNumber(text) {
-        try {
-            return Number.fromLocaleString(Qt.locale(), text.trim())
-        } catch (e) {
-            const value = Number(text.trim())
-            return isNaN(value) ? undefined : value
-        }
+    // Leaves a field without saving what was typed, and shows the selection's value again.
+    function cancel(field) {
+        field.edited = false
+        done()
+        refresh()
     }
 
     // Fields show the selection's shared values; while one has the keyboard it's left alone.
@@ -172,49 +171,60 @@ Rectangle {
             TextField {
                 id: labelField
                 property bool mixed: false
+                // Only typing changes the wells; focusing the field and leaving it doesn't.
+                property bool edited: false
                 Layout.fillWidth: true
                 placeholderText: mixed ? qsTr("Label (mixed)") : qsTr("Label")
+                onTextEdited: edited = true
                 onEditingFinished: {
-                    const info = backend.selectionInfo()
-                    if (text.trim() !== (info.label || "") || info.labelMixed)
-                        backend.setSelectionLabel(text)
+                    if (!edited)
+                        return
+                    edited = false
+                    backend.setSelectionLabel(text)
                 }
                 onAccepted: root.done()
-                Keys.onEscapePressed: { root.refresh(); root.done() }
+                Keys.onEscapePressed: root.cancel(labelField)
             }
             TextField {
                 id: concentrationField
                 property bool mixed: false
+                property bool edited: false
                 Layout.fillWidth: true
                 placeholderText: (mixed ? qsTr("Concentration (mixed)") : qsTr("Concentration"))
                                  + (backend.unit ? " (" + backend.unit + ")" : "")
                 inputMethodHints: Qt.ImhFormattedNumbersOnly
+                onTextEdited: edited = true
                 onEditingFinished: {
-                    const info = backend.selectionInfo()
-                    const current = info.concentration !== undefined ? root.formatNumber(info.concentration) : ""
-                    if (text.trim() === current && !info.concentrationMixed)
+                    if (!edited)
                         return
+                    edited = false
                     if (text.trim() === "") {
                         backend.setSelectionConcentration("")
                         return
                     }
-                    const value = root.parseNumber(text)
-                    if (value === undefined)
-                        backend.setSelectionConcentration(-1)
-                    else
-                        backend.setSelectionConcentration(value)
+                    const value = Numbers.parse(Qt.locale(), text)
+                    // The backend reports a number it can't take, such as a negative one.
+                    backend.setSelectionConcentration(isNaN(value) ? -1 : value)
                     root.refresh()
                 }
                 onAccepted: root.done()
-                Keys.onEscapePressed: { root.refresh(); root.done() }
+                Keys.onEscapePressed: root.cancel(concentrationField)
             }
             TextField {
                 id: unitField
+                property bool edited: false
                 Layout.fillWidth: true
                 placeholderText: qsTr("Unit for the plate, such as µM")
-                onEditingFinished: if (text.trim() !== backend.unit) backend.setUnit(text)
+                onTextEdited: edited = true
+                onEditingFinished: {
+                    if (!edited)
+                        return
+                    edited = false
+                    if (text.trim() !== backend.unit)
+                        backend.setUnit(text)
+                }
                 onAccepted: root.done()
-                Keys.onEscapePressed: { root.refresh(); root.done() }
+                Keys.onEscapePressed: root.cancel(unitField)
             }
 
             RowLayout {
@@ -259,7 +269,7 @@ Rectangle {
                 spacing: 4
                 Button { Layout.fillWidth: true; flat: true; focusPolicy: Qt.NoFocus; text: qsTr("New"); onClicked: root.newRequested() }
                 Button { Layout.fillWidth: true; flat: true; focusPolicy: Qt.NoFocus; text: qsTr("Open"); onClicked: root.openRequested() }
-                Button { Layout.fillWidth: true; flat: true; focusPolicy: Qt.NoFocus; text: qsTr("Save"); onClicked: { root.done(); backend.save() } }
+                Button { Layout.fillWidth: true; flat: true; focusPolicy: Qt.NoFocus; text: qsTr("Save"); onClicked: root.saveRequested() }
                 Button { Layout.fillWidth: true; flat: true; focusPolicy: Qt.NoFocus; text: qsTr("Export"); onClicked: { root.done(); backend.exportPlate() } }
             }
         }

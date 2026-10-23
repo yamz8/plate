@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
+import "Numbers.js" as Numbers
 
 // A serial dilution across the selection: the first well in the chosen
 // direction gets the start concentration, each next one start / factor^step.
@@ -35,15 +36,8 @@ Dialog {
     property real lastStart: 100
     property real lastFactor: 2
 
-    function parse(text) {
-        try {
-            return Number.fromLocaleString(Qt.locale(), text.trim())
-        } catch (e) {
-            const value = Number(text.trim())
-            return isNaN(value) ? NaN : value
-        }
-    }
-    function format(value) { return Number(value).toLocaleString(Qt.locale(), 'g', 6) }
+    function parse(text) { return Numbers.parse(Qt.locale(), text) }
+    function format(value) { return Numbers.format(Qt.locale(), value) }
     readonly property real start: parse(startField.text)
     readonly property real factor: parse(factorField.text)
     readonly property bool valid: start > 0 && factor > 0
